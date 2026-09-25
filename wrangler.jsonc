@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "frenchjumper-bot",
+  "account_id": "488c008885a1dc66fd4c52776130ea46",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "vars": {
+    "ALLOWED_GUILD_IDS": "442710603300208652"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "frenchjumper-bot",
+      "database_id": "4cbcf850-9593-42fb-8397-7dfca3565519",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
