@@ -22,16 +22,16 @@ d'Entropia Central. Il récupère la liste officielle des membres actifs, parcou
 l'API publique Entropia Central avec pagination, conserve uniquement les
 avatars actifs et publie les nouveaux globals dans Discord avec anti-doublon D1.
 
-Le déploiement initial reste volontairement désactivé :
+Le mode comparaison est activé :
 
 ```text
-ENTROPIA_POLLING_ENABLED=false
-ENTROPIA_PUBLISH_ENABLED=false
+ENTROPIA_POLLING_ENABLED=true
+ENTROPIA_PUBLISH_ENABLED=true
+ENTROPIA_DISCORD_CHANNEL_ID=1553100694503034940
 ```
 
-Pour une période de comparaison, définir `ENTROPIA_DISCORD_CHANNEL_ID` sur un
-salon privé temporaire, activer les deux interrupteurs puis ajouter un Cron
-Trigger `*/2 * * * *`. Les notifications Entropia Central existantes peuvent
+Le Cron `*/2 * * * *` interroge la source toutes les deux minutes et les
+publications visent le salon temporaire ci-dessus. Les notifications Entropia Central existantes peuvent
 continuer à publier dans leur salon habituel pendant toute la validation.
 
 Le Worker recharge le roster toutes les six heures et considère comme actif un

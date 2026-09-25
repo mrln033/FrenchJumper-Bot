@@ -9,14 +9,17 @@
     "ALLOWED_GUILD_IDS": "442710603300208652",
     "ENTROPIA_API_BASE_URL": "https://api.entropiacentral.com",
     "MEMBERS_API_URL": "https://script.google.com/macros/s/AKfycbzwUDJBSb--QOij9g1nnh9Ex8nXEa3iwedfNtMEZCbPbB-ruoyuQIeP6u-fAsGdrZ3W8Q/exec?action=getMembres",
-    "ENTROPIA_POLLING_ENABLED": "false",
-    "ENTROPIA_PUBLISH_ENABLED": "false",
-    "ENTROPIA_DISCORD_CHANNEL_ID": "",
+    "ENTROPIA_POLLING_ENABLED": "true",
+    "ENTROPIA_PUBLISH_ENABLED": "true",
+    "ENTROPIA_DISCORD_CHANNEL_ID": "1553100694503034940",
     "ENTROPIA_ROSTER_REFRESH_MINUTES": "360",
     "ENTROPIA_INITIAL_LOOKBACK_MINUTES": "10",
     "ENTROPIA_OVERLAP_SECONDS": "300",
     "ENTROPIA_PAGE_SIZE": "30",
     "ENTROPIA_MAX_PAGES": "10"
+  },
+  "triggers": {
+    "crons": ["*/2 * * * *"]
   },
   "observability": {
     "enabled": true,
