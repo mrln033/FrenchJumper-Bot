@@ -11,6 +11,33 @@ Discord Gateway permanente.
   Discord ;
 - `POST /webhooks/entropia-central` : réception HMAC et stockage idempotent dans
   D1 des livraisons Entropia.
+- `GET /health/entropia` : état protégé du lecteur de globals ;
+- `POST /admin/entropia/poll` : exécution manuelle protégée du lecteur pour les
+  tests et diagnostics.
+
+## Globals Entropia Central
+
+Le lecteur automatique fonctionne indépendamment des notifications existantes
+d'Entropia Central. Il récupère la liste officielle des membres actifs, parcourt
+l'API publique Entropia Central avec pagination, conserve uniquement les
+avatars actifs et publie les nouveaux globals dans Discord avec anti-doublon D1.
+
+Le déploiement initial reste volontairement désactivé :
+
+```text
+ENTROPIA_POLLING_ENABLED=false
+ENTROPIA_PUBLISH_ENABLED=false
+```
+
+Pour une période de comparaison, définir `ENTROPIA_DISCORD_CHANNEL_ID` sur un
+salon privé temporaire, activer les deux interrupteurs puis ajouter un Cron
+Trigger `*/2 * * * *`. Les notifications Entropia Central existantes peuvent
+continuer à publier dans leur salon habituel pendant toute la validation.
+
+Le Worker recharge le roster toutes les six heures et considère comme actif un
+membre dont `niveau` est strictement supérieur à zéro. Les globals d'équipe sont
+ignorés dans cette première version car ils ne permettent pas d'identifier de
+façon fiable un membre individuel.
 
 ## Secrets Cloudflare
 
@@ -34,6 +61,15 @@ npm test
 npx wrangler d1 migrations apply frenchjumper-bot --remote
 npm run deploy
 ```
+
+Avant la première activation du lecteur :
+
+```powershell
+npx wrangler d1 migrations apply frenchjumper-bot --remote
+```
+
+Après activation, son état peut être contrôlé avec un bearer `SYNC_TOKEN` sur
+`GET /health/entropia`.
 
 ## Production
 

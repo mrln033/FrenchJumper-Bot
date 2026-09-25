@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  buildDiscordGlobalMessage,
   constantTimeTokenMatches,
+  extractActiveMembers,
   handleRequest,
+  normalizeAvatarName,
+  runEntropiaPoll,
   signatureMatches,
   timestampIsFresh,
   validateSyncPayload,
@@ -122,4 +126,49 @@ test("Entropia HMAC accepts the expected raw body", async () => {
 
   assert.equal(await signatureMatches(body.buffer, timestamp, signature, secret), true);
   assert.equal(await signatureMatches(body.buffer, timestamp, `sha256=${"0".repeat(64)}`, secret), false);
+});
+
+test("member roster keeps only active avatars and normalizes names", () => {
+  const members = extractActiveMembers([
+    { id: "one", nom: "  Enzo   Beau Goss  ", grade: "Chef", niveau: 6 },
+    { id: "old", nom: "Ancien Joueur", grade: "Ancien Membre", niveau: 0 },
+    { id: "duplicate", nom: "enzo beau goss", grade: "Chef", niveau: 6 },
+  ]);
+
+  assert.equal(normalizeAvatarName("  Éléonore   Test  "), "éléonore test");
+  assert.equal(members.length, 1);
+  assert.equal(members[0].normalizedName, "enzo beau goss");
+  assert.equal(members[0].memberId, "duplicate");
+});
+
+test("Discord comparison message is safe and identifies the global", () => {
+  const message = buildDiscordGlobalMessage({
+    id: 30975817,
+    avatarName: "French Jumper Member",
+    globalValue: 1234.56,
+    creatureName: "Atrox Old Alpha",
+    landareaName: "Fort Ithaca",
+    type: "Hunting",
+    dateTime: "2026-09-25T16:21:26Z",
+    isHof: true,
+    isAth: false,
+    detailRoute: "/wiki/creatures/atrox-old-alpha",
+  });
+
+  assert.match(message.content, /Comparaison automatique/);
+  assert.deepEqual(message.allowed_mentions, { parse: [] });
+  assert.match(message.embeds[0].title, /HOF.*French Jumper Member/);
+  assert.match(message.embeds[0].fields[0].value, /1[\s\u202f]234,56 PED/);
+  assert.match(message.embeds[0].footer.text, /30975817/);
+});
+
+test("Entropia polling stays inert while its feature flag is disabled", async () => {
+  let fetched = false;
+  const result = await runEntropiaPoll({ ENTROPIA_POLLING_ENABLED: "false" }, async () => {
+    fetched = true;
+    throw new Error("fetch should not be called");
+  });
+
+  assert.deepEqual(result, { outcome: "disabled" });
+  assert.equal(fetched, false);
 });
