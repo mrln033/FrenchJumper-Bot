@@ -6,6 +6,10 @@
   "compatibility_date": "2026-09-25",
   "compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
   "vars": {
+    "ADMIN_ORIGIN": "https://frenchjumper-bot.enzo-488.workers.dev",
+    "ADMIN_GUILD_ID": "442710603300208652",
+    "DISCORD_CLIENT_ID": "1479825051522957462",
+    "ADMIN_ROLE_IDS": "464513638414417930",
     "ALLOWED_GUILD_IDS": "442710603300208652",
     "ENTROPIA_API_BASE_URL": "https://api.entropiacentral.com",
     "MEMBERS_API_URL": "https://script.google.com/macros/s/AKfycbzwUDJBSb--QOij9g1nnh9Ex8nXEa3iwedfNtMEZCbPbB-ruoyuQIeP6u-fAsGdrZ3W8Q/exec?action=getMembres",

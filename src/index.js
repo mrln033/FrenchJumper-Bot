@@ -1,3 +1,4 @@
+import { handleAdmin, settingsEnv } from "./admin.js";
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 const ENTROPIA_API_DEFAULT = "https://api.entropiacentral.com";
 const MAX_BODY_BYTES = 32 * 1024;
@@ -594,6 +595,7 @@ export async function runEntropiaPoll(env, fetcher = fetch, options = {}) {
   if (!(await acquirePollLease(env, now))) return { outcome: "locked" };
 
   try {
+    env = await settingsEnv(env);
     const roster = await refreshMemberRoster(env, fetcher, now, Boolean(options.refreshRoster));
     const activeMemberNames = await loadActiveMemberNames(env);
     if (activeMemberNames.size === 0) throw new Error("Active member roster is empty");
@@ -623,7 +625,7 @@ export async function runEntropiaPoll(env, fetcher = fetch, options = {}) {
       env,
       fetched.globals,
       activeMemberNames,
-      publishEnabled,
+      Boolean(env.ENTROPIA_DISCORD_CHANNEL_ID),
       now,
     );
     const publication = publishEnabled
@@ -673,6 +675,7 @@ async function entropiaStatus(request, env) {
   if (!env.SYNC_TOKEN || !(await isAuthorized(request, env))) {
     return json({ success: false, error: "Unauthorized" }, 401);
   }
+  env = await settingsEnv(env);
   const [state, counts] = await Promise.all([
     getPollState(env),
     env.DB.prepare(`
@@ -825,6 +828,9 @@ async function receiveEntropiaWebhook(request, env) {
 export async function handleRequest(request, env, fetcher = fetch) {
   const url = new URL(request.url);
   try {
+    if (url.pathname.startsWith('/admin') && url.pathname !== '/admin/entropia/poll') {
+      return await handleAdmin(request, env, fetcher);
+    }
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ status: "ok", service: "frenchjumper-bot", runtime: "cloudflare-workers" });
     }
