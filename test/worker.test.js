@@ -155,11 +155,26 @@ test("Discord comparison message is safe and identifies the global", () => {
     detailRoute: "/wiki/creatures/atrox-old-alpha",
   });
 
-  assert.match(message.content, /Comparaison automatique/);
+  assert.equal(message.content, undefined);
   assert.deepEqual(message.allowed_mentions, { parse: [] });
-  assert.match(message.embeds[0].title, /HOF.*French Jumper Member/);
-  assert.match(message.embeds[0].fields[0].value, /1[\s\u202f]234,56 PED/);
-  assert.match(message.embeds[0].footer.text, /30975817/);
+  assert.match(message.embeds[0].description, /HOF.*French Jumper Member/);
+  assert.match(message.embeds[0].description, /\*\*1234\.56 PED\*\*/);
+  assert.match(message.embeds[0].description, /https:\/\/www.entropiacentral.com\/wiki\/creatures\/atrox-old-alpha/);
+  assert.match(message.embeds[0].footer.text, /Comparaison/);
+  assert.match(message.embeds[0].footer.text, /Source : Entropia Central/);
+  assert.equal(message.embeds[0].timestamp, "2026-09-25T16:21:26.000Z");
+  const ath = buildDiscordGlobalMessage({ avatarName: "Test", type: "Mining", globalValue: 100000, isAth: true, isHof: true });
+  assert.match(ath.embeds[0].description, /ATH! ALL-TIME HIGH!/);
+  assert.equal(ath.embeds[0].color, 0x3498db);
+});
+
+test("Discord colors identify activity independently of Global, HoF or ATH", () => {
+  for (const [type, color] of Object.entries({ Hunting: 0xff5733, Mining: 0x3498db, "Space Mining": 0x3498db, Construction: 0xffb900, Unknown: 0x95a5a6 })) {
+    for (const flags of [{}, { isHof: true }, { isHof: true, isAth: true }]) {
+      const message = buildDiscordGlobalMessage({ avatarName: "Test", type, ...flags });
+      assert.equal(message.embeds[0].color, color, `${type}: ${JSON.stringify(flags)}`);
+    }
+  }
 });
 
 test("Entropia polling stays inert while its feature flag is disabled", async () => {

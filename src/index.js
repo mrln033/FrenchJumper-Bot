@@ -307,35 +307,46 @@ function entropiaDetail(global) {
   return [type, subject, valueLabel].filter(Boolean).join(" • ");
 }
 
+function messageLabel(value) {
+  return truncate(value, 200).replace(/[\\`*_{}\[\]()<>]/g, "\\$&");
+}
+
+function ecLink(label, route) {
+  const text = messageLabel(label);
+  if (typeof route !== "string" || !/^\/(avatars|teams|wiki|landareas)\//.test(route)) return text;
+  const url = new URL(route, "https://www.entropiacentral.com");
+  return `[${text}](${url.href.replace(/\(/g, "%28").replace(/\)/g, "%29")})`;
+}
+
 export function buildDiscordGlobalMessage(global, comparisonMode = true) {
   const avatarName = truncate(global.avatarName || "Avatar inconnu", 200);
-  const prefix = global.isAth ? "🏆 ATH" : global.isHof ? "⭐ HOF" : "🌐 Global";
+  const prefix = global.isAth ? "🏆 **ATH! ALL-TIME HIGH!** 🏆\n" : global.isHof ? "⭐ **HOF!** " : "";
   const occurredAt = new Date(global.dateTime);
-  const detailUrl = typeof global.detailRoute === "string" && global.detailRoute.startsWith("/")
-    ? `https://www.entropiacentral.com${global.detailRoute}`
-    : undefined;
-  const fields = [{
-    name: "Résultat",
-    value: truncate(entropiaDetail(global) || "Global Entropia Universe", 1024),
-    inline: false,
-  }];
-  if (global.landareaName) {
-    fields.push({ name: "Lieu", value: truncate(global.landareaName, 1024), inline: true });
-  }
+  const slug = (name) => encodeURIComponent(String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+  const avatar = ecLink(avatarName, `/avatars/${global.avatarSlug || slug(avatarName)}`);
+  const subject = global.creatureName || global.depositName || global.craftedItemName
+    || global.discoveredItemName || global.rareItemName || global.tieredItemName || "item";
+  const target = ecLink(subject, global.detailRoute);
+  const actions = { Hunting: "killed a", Mining: "found a deposit", "Space Mining": "found a deposit",
+    Construction: "constructed a", Discovery: "discovered a", "Rare Item": "found a rare item",
+    "Tiered Item": "tiered up a" };
+  const value = Number(global.globalValue);
+  let sentence = `${avatar} ${actions[global.type] || "recorded a global on"} ${target}`;
+  if (global.type === "PvP") sentence = `${avatar} achieved **${Number(global.pvpSpree) || 0} PvP kills**`;
+  else if (global.type === "Tiered Item") sentence += ` to tier **${Number(global.tieredItemTier) || 0}**`;
+  else if (global.globalValue != null && Number.isFinite(value)) sentence += ` with the value of **${value} PED**`;
+  sentence += "!";
+  if (global.landareaName) sentence += ` @${ecLink(global.landareaName, `/landareas/${slug(global.landareaName)}`)}`;
 
   return {
-    content: comparisonMode ? "🧪 **Comparaison automatique — FrenchJumper Bot**" : undefined,
     allowed_mentions: { parse: [] },
     embeds: [{
-      title: truncate(`${prefix} — ${avatarName}`, 256),
-      description: "Global détecté automatiquement via l’API publique Entropia Central.",
-      url: detailUrl,
-      color: global.isAth ? 0xf1c40f : global.isHof ? 0xe67e22 : 0x3498db,
-      fields,
+      description: `${prefix}${sentence}`,
+      color: ({ Hunting: 0xff5733, Mining: 0x3498db, "Space Mining": 0x3498db, Construction: 0xffb900 })[global.type] ?? 0x95a5a6,
       footer: {
         text: comparisonMode
-          ? `Entropia Central • mode comparaison • global ${global.id}`
-          : `Entropia Central • global ${global.id}`,
+          ? "Source : Entropia Central • entropiacentral.com • Comparaison"
+          : "Source : Entropia Central • entropiacentral.com",
       },
       timestamp: Number.isNaN(occurredAt.getTime()) ? undefined : occurredAt.toISOString(),
     }],
