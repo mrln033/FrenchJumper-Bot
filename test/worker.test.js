@@ -227,17 +227,17 @@ test("Footer contains only source and timestamp always comes from the entry", ()
 test("French narration preserves source names across categories", () => {
   for (const [type, field, action] of [
     ["Hunting", "creatureName", "a tué un"], ["Mining", "depositName", "a trouvé un gisement de"],
-    ["Construction", "craftedItemName", "a fabriqué"], ["New Items", "discoveredItemName", "a découvert un"],
-    ["Rare Items", "rareItemName", "a trouvé un objet rare :"], ["Reached Item Tiers", "tieredItemName", "a amélioré"],
-    ["Space Mining", "depositName", "a trouvé un gisement spatial sur"], ["Fishing", "creatureName", "a pêché"],
-    ["Kill as Creature", "creatureName", "a réalisé un global en tant que créature sur"],
+    ["Construction", "craftedItemName", "a fabriqué un"], ["New Items", "discoveredItemName", "a découvert un"],
+    ["Rare Items", "rareItemName", "a trouvé un objet rare :"], ["Reached Item Tiers", "tieredItemName", "a amélioré un"],
+    ["Space Mining", "depositName", "a trouvé un gisement spatial sur"], ["Fishing", "creatureName", "a pêché un"],
+    ["Kill as Creature", "creatureName", "a réalisé un global en tant que"],
   ]) {
     const embed = buildDiscordGlobalMessage({ avatarName: "MiXeD Avatar É", type, [field]: "Original English Name",
       landareaName: "Original Land", globalValue: 64, tieredItemTier: 3 }).embeds[0];
     assert.ok(embed.description.includes("MiXeD Avatar É"));
     assert.ok(embed.description.includes("Original English Name"));
     assert.ok(embed.description.includes("Original Land"));
-    assert.ok(embed.description.includes(action));
+    assert.ok(embed.description.includes(`${action} Original English Name`));
     assert.ok(embed.description.includes(type === "Reached Item Tiers" ? "au palier **3**" : "d’une valeur de **64 PED**"));
   }
   assert.match(buildDiscordGlobalMessage({ type: "Killing Spree", pvpSpree: 12 }).embeds[0].description, /12 éliminations en JcJ/);
