@@ -323,7 +323,9 @@ export function buildDiscordGlobalMessage(global, comparisonMode = true) {
   const prefix = global.isAth ? "🏆 **ATH! ALL-TIME HIGH!** 🏆\n" : global.isHof ? "⭐ **HOF!** " : "";
   const occurredAt = new Date(global.dateTime);
   const slug = (name) => encodeURIComponent(String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
-  const avatar = ecLink(avatarName, `/avatars/${global.avatarSlug || slug(avatarName)}`);
+  const avatar = global.isTeam
+    ? `👥 ${global.teamSlug ? ecLink(avatarName, `/teams/${global.teamSlug}`) : messageLabel(avatarName)}`
+    : ecLink(avatarName, `/avatars/${global.avatarSlug || slug(avatarName)}`);
   const subject = global.creatureName || global.depositName || global.craftedItemName
     || global.discoveredItemName || global.rareItemName || global.tieredItemName || "item";
   const target = ecLink(subject, global.detailRoute);
@@ -475,12 +477,14 @@ async function fetchEntropiaGlobals(env, fetcher, fromDate, toDate) {
   return { globals, truncated, pageSize, maxPages };
 }
 
+export function matchesSocietyGlobal(global, activeMemberNames) {
+  if (!Number.isInteger(global?.id)) return false;
+  if (global.isTeam) return /frenchjumper|frj/i.test(String(global.avatarName || ""));
+  return activeMemberNames.has(normalizeAvatarName(global.avatarName));
+}
+
 async function storeMatchedGlobals(env, globals, activeMemberNames, publishEnabled, now) {
-  const matches = globals.filter((global) => (
-    Number.isInteger(global?.id)
-    && !global.isTeam
-    && activeMemberNames.has(normalizeAvatarName(global.avatarName))
-  ));
+  const matches = globals.filter((global) => matchesSocietyGlobal(global, activeMemberNames));
   let inserted = 0;
   for (let offset = 0; offset < matches.length; offset += 50) {
     const statements = matches.slice(offset, offset + 50).map((global) => env.DB.prepare(`

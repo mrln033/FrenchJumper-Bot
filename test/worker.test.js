@@ -6,6 +6,7 @@ import {
   extractActiveMembers,
   handleRequest,
   normalizeAvatarName,
+  matchesSocietyGlobal,
   runEntropiaPoll,
   signatureMatches,
   timestampIsFresh,
@@ -175,6 +176,30 @@ test("Discord colors identify activity independently of Global, HoF or ATH", () 
       assert.equal(message.embeds[0].color, color, `${type}: ${JSON.stringify(flags)}`);
     }
   }
+});
+
+test("Society team matching is case insensitive and independent of membership", () => {
+  const members = new Set(["active member"]);
+  for (const avatarName of ["Frenchjumper Hunt", "FRENCHJUMPER", "fReNcHjUmPeR", "Team FRJ", "frj", "SuperFrJTeam"]) {
+    assert.equal(matchesSocietyGlobal({ id: 1, isTeam: true, avatarName }, members), true);
+  }
+  for (const avatarName of ["Other team", "active member", "", null]) {
+    assert.equal(matchesSocietyGlobal({ id: 1, isTeam: true, avatarName }, members), false);
+  }
+  assert.equal(matchesSocietyGlobal({ id: 1, avatarName: "ACTIVE MEMBER" }, members), true);
+  assert.equal(matchesSocietyGlobal({ id: 1, avatarName: "FRJ outsider" }, members), false);
+  assert.equal(matchesSocietyGlobal({ isTeam: true, avatarName: "FRJ" }, members), false);
+  assert.equal(matchesSocietyGlobal(null, members), false);
+});
+
+test("Team embeds identify teams without linking to an avatar profile", () => {
+  const team = { avatarName: "FRJ Hunt", isTeam: true, type: "Hunting", dateTime: "2026-09-26T06:00:00Z" };
+  const embed = buildDiscordGlobalMessage({ ...team, teamSlug: "frj-hunt" }).embeds[0];
+  assert.match(embed.description, /👥 \[FRJ Hunt\]\(https:\/\/www.entropiacentral.com\/teams\/frj-hunt\)/);
+  assert.equal(embed.color, 0xff5733);
+  assert.equal(embed.timestamp, "2026-09-26T06:00:00.000Z");
+  assert.match(embed.footer.text, /Source : Entropia Central/);
+  assert.doesNotMatch(buildDiscordGlobalMessage(team).embeds[0].description, /\/avatars\//);
 });
 
 test("Entropia polling stays inert while its feature flag is disabled", async () => {

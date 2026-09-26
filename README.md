@@ -36,8 +36,10 @@ continuer à publier dans leur salon habituel pendant toute la validation.
 
 Le Worker recharge le roster toutes les six heures et considère comme actif un
 membre dont `niveau` est strictement supérieur à zéro. Les globals d'équipe sont
-ignorés dans cette première version car ils ne permettent pas d'identifier de
-façon fiable un membre individuel.
+acceptés si leur nom contient `Frenchjumper` ou `FRJ`, sans distinction de casse,
+même au milieu d'un mot. Ce filtre de nom ne vérifie pas les membres de l'équipe.
+Ils suivent le même circuit anti-doublon et le même salon de comparaison, avec
+un marqueur 👥. Aucun appel API ni stockage supplémentaire par équipe n'est ajouté.
 
 ## Secrets Cloudflare
 
