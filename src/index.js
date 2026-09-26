@@ -340,25 +340,25 @@ export function buildDiscordGlobalMessage(global, comparisonMode = true) {
   const [type, color] = GLOBAL_CATEGORIES.get(GLOBAL_CATEGORY_ALIASES.get(categoryKey) || categoryKey)
     || [global.type, 0x95a5a6];
   const avatarName = truncate(global.avatarName || "Avatar inconnu", 200);
-  const prefix = global.isAth ? "🏆 **ATH! ALL-TIME HIGH!** 🏆\n" : global.isHof ? "⭐ **HOF!** " : "";
+  const prefix = global.isAth ? "🏆 **ATH ! RECORD ABSOLU !** 🏆\n" : global.isHof ? "⭐ **HOF !** " : "";
   const occurredAt = new Date(global.dateTime ?? NaN);
   const slug = (name) => encodeURIComponent(String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   const avatar = global.isTeam
     ? `👥 ${global.teamSlug ? ecLink(avatarName, `/teams/${global.teamSlug}`) : messageLabel(avatarName)}`
     : ecLink(avatarName, `/avatars/${global.avatarSlug || slug(avatarName)}`);
   const subject = global.creatureName || global.depositName || global.craftedItemName
-    || global.discoveredItemName || global.rareItemName || global.tieredItemName || "item";
+    || global.discoveredItemName || global.rareItemName || global.tieredItemName || "objet non précisé";
   const target = ecLink(subject, global.detailRoute);
-  const actions = { Hunting: "killed a", Mining: "found a deposit", "Space Mining": "found a deposit",
-    Construction: "constructed a", Discovery: "discovered a", "Rare Item": "found a rare item",
-    "Tiered Item": "tiered up a", Fishing: "caught a" };
+  const actions = { Hunting: "a vaincu", Mining: "a trouvé un gisement de", "Space Mining": "a trouvé un gisement spatial de",
+    Construction: "a fabriqué", Discovery: "a découvert", "Rare Item": "a trouvé un objet rare :",
+    "Tiered Item": "a amélioré", Fishing: "a pêché", "Kill as Creature": "a réalisé un global en tant que créature sur" };
   const value = Number(global.globalValue);
-  let sentence = `${avatar} ${actions[type] || "recorded a global on"} ${target}`;
-  if (type === "PvP") sentence = `${avatar} achieved **${Number(global.pvpSpree) || 0} PvP kills**`;
-  else if (type === "Tiered Item") sentence += ` to tier **${Number(global.tieredItemTier) || 0}**`;
-  else if (global.globalValue != null && Number.isFinite(value)) sentence += ` with the value of **${value} PED**`;
-  sentence += "!";
-  if (global.landareaName) sentence += ` @${ecLink(global.landareaName, `/landareas/${slug(global.landareaName)}`)}`;
+  let sentence = `${avatar} ${actions[type] || "a réalisé un global sur"} ${target}`;
+  if (type === "PvP") sentence = `${avatar} a réalisé une série de **${Number(global.pvpSpree) || 0} éliminations en JcJ**`;
+  else if (type === "Tiered Item") sentence += ` au palier **${Number(global.tieredItemTier) || 0}**`;
+  else if (global.globalValue != null && Number.isFinite(value)) sentence += ` d’une valeur de **${value} PED**`;
+  sentence += " !";
+  if (global.landareaName) sentence += ` — Lieu : ${ecLink(global.landareaName, `/landareas/${slug(global.landareaName)}`)}`;
 
   return {
     allowed_mentions: { parse: [] },

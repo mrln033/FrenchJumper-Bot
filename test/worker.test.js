@@ -164,7 +164,7 @@ test("Discord comparison message is safe and identifies the global", () => {
   assert.equal(message.embeds[0].footer.text, "Source : entropiacentral.com");
   assert.equal(message.embeds[0].timestamp, "2026-09-25T16:21:26.000Z");
   const ath = buildDiscordGlobalMessage({ avatarName: "Test", type: "Mining", globalValue: 100000, isAth: true, isHof: true });
-  assert.match(ath.embeds[0].description, /ATH! ALL-TIME HIGH!/);
+  assert.match(ath.embeds[0].description, /ATH ! RECORD ABSOLU !/);
   assert.equal(ath.embeds[0].color, 0x3498db);
 });
 
@@ -222,6 +222,25 @@ test("Footer contains only source and timestamp always comes from the entry", ()
       assert.equal(buildDiscordGlobalMessage({ dateTime }, comparison).embeds[0].timestamp, undefined);
     }
   }
+});
+
+test("French narration preserves source names across categories", () => {
+  for (const [type, field, action] of [
+    ["Hunting", "creatureName", "a vaincu"], ["Mining", "depositName", "a trouvé un gisement de"],
+    ["Construction", "craftedItemName", "a fabriqué"], ["New Items", "discoveredItemName", "a découvert"],
+    ["Rare Items", "rareItemName", "a trouvé un objet rare :"], ["Reached Item Tiers", "tieredItemName", "a amélioré"],
+    ["Space Mining", "depositName", "a trouvé un gisement spatial de"], ["Fishing", "creatureName", "a pêché"],
+    ["Kill as Creature", "creatureName", "a réalisé un global en tant que créature sur"],
+  ]) {
+    const embed = buildDiscordGlobalMessage({ avatarName: "MiXeD Avatar É", type, [field]: "Original English Name",
+      landareaName: "Original Land", globalValue: 64, tieredItemTier: 3 }).embeds[0];
+    assert.ok(embed.description.includes("MiXeD Avatar É"));
+    assert.ok(embed.description.includes("Original English Name"));
+    assert.ok(embed.description.includes("Original Land"));
+    assert.ok(embed.description.includes(action));
+    assert.ok(embed.description.includes(type === "Reached Item Tiers" ? "au palier **3**" : "d’une valeur de **64 PED**"));
+  }
+  assert.match(buildDiscordGlobalMessage({ type: "Killing Spree", pvpSpree: 12 }).embeds[0].description, /12 éliminations en JcJ/);
 });
 
 test("Entropia polling stays inert while its feature flag is disabled", async () => {
