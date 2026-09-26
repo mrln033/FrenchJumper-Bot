@@ -226,10 +226,10 @@ test("Footer contains only source and timestamp always comes from the entry", ()
 
 test("French narration preserves source names across categories", () => {
   for (const [type, field, action] of [
-    ["Hunting", "creatureName", "a vaincu"], ["Mining", "depositName", "a trouvé un gisement de"],
-    ["Construction", "craftedItemName", "a fabriqué"], ["New Items", "discoveredItemName", "a découvert"],
+    ["Hunting", "creatureName", "a tué un"], ["Mining", "depositName", "a trouvé un gisement de"],
+    ["Construction", "craftedItemName", "a fabriqué"], ["New Items", "discoveredItemName", "a découvert un"],
     ["Rare Items", "rareItemName", "a trouvé un objet rare :"], ["Reached Item Tiers", "tieredItemName", "a amélioré"],
-    ["Space Mining", "depositName", "a trouvé un gisement spatial de"], ["Fishing", "creatureName", "a pêché"],
+    ["Space Mining", "depositName", "a trouvé un gisement spatial sur"], ["Fishing", "creatureName", "a pêché"],
     ["Kill as Creature", "creatureName", "a réalisé un global en tant que créature sur"],
   ]) {
     const embed = buildDiscordGlobalMessage({ avatarName: "MiXeD Avatar É", type, [field]: "Original English Name",

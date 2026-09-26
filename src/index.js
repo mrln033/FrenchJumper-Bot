@@ -349,8 +349,8 @@ export function buildDiscordGlobalMessage(global, comparisonMode = true) {
   const subject = global.creatureName || global.depositName || global.craftedItemName
     || global.discoveredItemName || global.rareItemName || global.tieredItemName || "objet non précisé";
   const target = ecLink(subject, global.detailRoute);
-  const actions = { Hunting: "a vaincu", Mining: "a trouvé un gisement de", "Space Mining": "a trouvé un gisement spatial de",
-    Construction: "a fabriqué", Discovery: "a découvert", "Rare Item": "a trouvé un objet rare :",
+  const actions = { Hunting: "a tué un", Mining: "a trouvé un gisement de", "Space Mining": "a trouvé un gisement spatial sur",
+    Construction: "a fabriqué", Discovery: "a découvert un", "Rare Item": "a trouvé un objet rare :",
     "Tiered Item": "a amélioré", Fishing: "a pêché", "Kill as Creature": "a réalisé un global en tant que créature sur" };
   const value = Number(global.globalValue);
   let sentence = `${avatar} ${actions[type] || "a réalisé un global sur"} ${target}`;
