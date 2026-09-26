@@ -161,8 +161,7 @@ test("Discord comparison message is safe and identifies the global", () => {
   assert.match(message.embeds[0].description, /HOF.*French Jumper Member/);
   assert.match(message.embeds[0].description, /\*\*1234\.56 PED\*\*/);
   assert.match(message.embeds[0].description, /https:\/\/www.entropiacentral.com\/wiki\/creatures\/atrox-old-alpha/);
-  assert.match(message.embeds[0].footer.text, /Comparaison/);
-  assert.match(message.embeds[0].footer.text, /Source : Entropia Central/);
+  assert.equal(message.embeds[0].footer.text, "Source : entropiacentral.com");
   assert.equal(message.embeds[0].timestamp, "2026-09-25T16:21:26.000Z");
   const ath = buildDiscordGlobalMessage({ avatarName: "Test", type: "Mining", globalValue: 100000, isAth: true, isHof: true });
   assert.match(ath.embeds[0].description, /ATH! ALL-TIME HIGH!/);
@@ -210,8 +209,19 @@ test("Team embeds identify teams without linking to an avatar profile", () => {
   assert.match(embed.description, /👥 \[FRJ Hunt\]\(https:\/\/www.entropiacentral.com\/teams\/frj-hunt\)/);
   assert.equal(embed.color, 0xff5733);
   assert.equal(embed.timestamp, "2026-09-26T06:00:00.000Z");
-  assert.match(embed.footer.text, /Source : Entropia Central/);
+  assert.equal(embed.footer.text, "Source : entropiacentral.com");
   assert.doesNotMatch(buildDiscordGlobalMessage(team).embeds[0].description, /\/avatars\//);
+});
+
+test("Footer contains only source and timestamp always comes from the entry", () => {
+  for (const comparison of [true, false]) {
+    const embed = buildDiscordGlobalMessage({ dateTime: "2020-01-02T14:30:00+02:00" }, comparison).embeds[0];
+    assert.deepEqual(embed.footer, { text: "Source : entropiacentral.com" });
+    assert.equal(embed.timestamp, "2020-01-02T12:30:00.000Z");
+    for (const dateTime of [undefined, null, "", "invalid"]) {
+      assert.equal(buildDiscordGlobalMessage({ dateTime }, comparison).embeds[0].timestamp, undefined);
+    }
+  }
 });
 
 test("Entropia polling stays inert while its feature flag is disabled", async () => {

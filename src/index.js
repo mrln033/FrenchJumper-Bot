@@ -341,7 +341,7 @@ export function buildDiscordGlobalMessage(global, comparisonMode = true) {
     || [global.type, 0x95a5a6];
   const avatarName = truncate(global.avatarName || "Avatar inconnu", 200);
   const prefix = global.isAth ? "🏆 **ATH! ALL-TIME HIGH!** 🏆\n" : global.isHof ? "⭐ **HOF!** " : "";
-  const occurredAt = new Date(global.dateTime);
+  const occurredAt = new Date(global.dateTime ?? NaN);
   const slug = (name) => encodeURIComponent(String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   const avatar = global.isTeam
     ? `👥 ${global.teamSlug ? ecLink(avatarName, `/teams/${global.teamSlug}`) : messageLabel(avatarName)}`
@@ -365,11 +365,7 @@ export function buildDiscordGlobalMessage(global, comparisonMode = true) {
     embeds: [{
       description: `${prefix}${sentence}`,
       color,
-      footer: {
-        text: comparisonMode
-          ? "Source : Entropia Central • entropiacentral.com • Comparaison"
-          : "Source : Entropia Central • entropiacentral.com",
-      },
+      footer: { text: "Source : entropiacentral.com" },
       timestamp: Number.isNaN(occurredAt.getTime()) ? undefined : occurredAt.toISOString(),
     }],
   };
