@@ -318,7 +318,27 @@ function ecLink(label, route) {
   return `[${text}](${url.href.replace(/\(/g, "%28").replace(/\)/g, "%29")})`;
 }
 
+const GLOBAL_CATEGORIES = new Map([
+  ["hunting", ["Hunting", 0xff5733]],
+  ["mining", ["Mining", 0x3498db]],
+  ["construction", ["Construction", 0xffb900]],
+  ["killing spree", ["PvP", 0xc0392b]],
+  ["new items", ["Discovery", 0x2ecc71]],
+  ["reached item tiers", ["Tiered Item", 0x9b59b6]],
+  ["rare items", ["Rare Item", 0xe84393]],
+  ["kill as creature", ["Kill as Creature", 0xa66e3f]],
+  ["space mining", ["Space Mining", 0x5865f2]],
+  ["fishing", ["Fishing", 0x1abc9c]],
+]);
+const GLOBAL_CATEGORY_ALIASES = new Map([
+  ["pvp", "killing spree"], ["discovery", "new items"],
+  ["tiered item", "reached item tiers"], ["rare item", "rare items"],
+]);
+
 export function buildDiscordGlobalMessage(global, comparisonMode = true) {
+  const categoryKey = String(global.type || "").trim().toLowerCase();
+  const [type, color] = GLOBAL_CATEGORIES.get(GLOBAL_CATEGORY_ALIASES.get(categoryKey) || categoryKey)
+    || [global.type, 0x95a5a6];
   const avatarName = truncate(global.avatarName || "Avatar inconnu", 200);
   const prefix = global.isAth ? "🏆 **ATH! ALL-TIME HIGH!** 🏆\n" : global.isHof ? "⭐ **HOF!** " : "";
   const occurredAt = new Date(global.dateTime);
@@ -331,11 +351,11 @@ export function buildDiscordGlobalMessage(global, comparisonMode = true) {
   const target = ecLink(subject, global.detailRoute);
   const actions = { Hunting: "killed a", Mining: "found a deposit", "Space Mining": "found a deposit",
     Construction: "constructed a", Discovery: "discovered a", "Rare Item": "found a rare item",
-    "Tiered Item": "tiered up a" };
+    "Tiered Item": "tiered up a", Fishing: "caught a" };
   const value = Number(global.globalValue);
-  let sentence = `${avatar} ${actions[global.type] || "recorded a global on"} ${target}`;
-  if (global.type === "PvP") sentence = `${avatar} achieved **${Number(global.pvpSpree) || 0} PvP kills**`;
-  else if (global.type === "Tiered Item") sentence += ` to tier **${Number(global.tieredItemTier) || 0}**`;
+  let sentence = `${avatar} ${actions[type] || "recorded a global on"} ${target}`;
+  if (type === "PvP") sentence = `${avatar} achieved **${Number(global.pvpSpree) || 0} PvP kills**`;
+  else if (type === "Tiered Item") sentence += ` to tier **${Number(global.tieredItemTier) || 0}**`;
   else if (global.globalValue != null && Number.isFinite(value)) sentence += ` with the value of **${value} PED**`;
   sentence += "!";
   if (global.landareaName) sentence += ` @${ecLink(global.landareaName, `/landareas/${slug(global.landareaName)}`)}`;
@@ -344,7 +364,7 @@ export function buildDiscordGlobalMessage(global, comparisonMode = true) {
     allowed_mentions: { parse: [] },
     embeds: [{
       description: `${prefix}${sentence}`,
-      color: ({ Hunting: 0xff5733, Mining: 0x3498db, "Space Mining": 0x3498db, Construction: 0xffb900 })[global.type] ?? 0x95a5a6,
+      color,
       footer: {
         text: comparisonMode
           ? "Source : Entropia Central • entropiacentral.com • Comparaison"

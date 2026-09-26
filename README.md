@@ -41,6 +41,26 @@ même au milieu d'un mot. Ce filtre de nom ne vérifie pas les membres de l'équ
 Ils suivent le même circuit anti-doublon et le même salon de comparaison, avec
 un marqueur 👥. Aucun appel API ni stockage supplémentaire par équipe n'est ajouté.
 
+## Couleurs des catégories
+
+Couleurs des encarts, indépendantes de Global / HoF / ATH :
+
+| Catégorie | Couleur |
+| --- | --- |
+| Hunting | Rouge-orangé `#FF5733` |
+| Mining | Bleu `#3498DB` |
+| Construction | Jaune `#FFB900` |
+| Killing Spree | Rouge sombre `#C0392B` |
+| New Items | Vert `#2ECC71` |
+| Reached Item Tiers | Violet `#9B59B6` |
+| Rare Items | Rose `#E84393` |
+| Kill as Creature | Brun `#A66E3F` |
+| Space Mining | Indigo `#5865F2` |
+| Fishing | Turquoise `#1ABC9C` |
+
+Reconnaissance insensible à la casse ; alias API `PvP`, `Discovery`,
+`Tiered Item`, `Rare item` acceptés. Catégorie inconnue : gris `#95A5A6`.
+
 ## Secrets Cloudflare
 
 Configurer les secrets sans les écrire dans Git :

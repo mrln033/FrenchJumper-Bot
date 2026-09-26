@@ -170,11 +170,23 @@ test("Discord comparison message is safe and identifies the global", () => {
 });
 
 test("Discord colors identify activity independently of Global, HoF or ATH", () => {
-  for (const [type, color] of Object.entries({ Hunting: 0xff5733, Mining: 0x3498db, "Space Mining": 0x3498db, Construction: 0xffb900, Unknown: 0x95a5a6 })) {
+  const colors = { Hunting: 0xff5733, Mining: 0x3498db, Construction: 0xffb900,
+    "Killing Spree": 0xc0392b, "New Items": 0x2ecc71, "Reached Item Tiers": 0x9b59b6,
+    "Rare Items": 0xe84393, "Kill as Creature": 0xa66e3f, "Space Mining": 0x5865f2, Fishing: 0x1abc9c };
+  assert.equal(new Set(Object.values(colors)).size, 10);
+  for (const [type, color] of Object.entries({ ...colors, Unknown: 0x95a5a6 })) {
     for (const flags of [{}, { isHof: true }, { isHof: true, isAth: true }]) {
       const message = buildDiscordGlobalMessage({ avatarName: "Test", type, ...flags });
       assert.equal(message.embeds[0].color, color, `${type}: ${JSON.stringify(flags)}`);
+      assert.equal(buildDiscordGlobalMessage({ type: ` ${type.toUpperCase()} `, ...flags }).embeds[0].color, color);
     }
+  }
+});
+
+test("API category aliases share their display category colors", () => {
+  for (const [type, category] of [["PvP", "Killing Spree"], ["Discovery", "New Items"], ["Tiered Item", "Reached Item Tiers"], ["Rare item", "Rare Items"]]) {
+    assert.equal(buildDiscordGlobalMessage({ type }).embeds[0].color,
+      buildDiscordGlobalMessage({ type: category }).embeds[0].color);
   }
 });
 
