@@ -1,0 +1,559 @@
+Projet = FrenchJumper Bot
+
+Dernière mise à jour : 27/09/2026
+
+
+BUT DU PROJET
+
+Le projet FrenchJumper Bot fournit les fonctions Discord propres à la communauté
+FrenchJumper.
+
+Il s'agit d'un bot distinct de PathFinder XIII :
+- application Discord différente ;
+- serveur Discord différent ;
+- Worker Cloudflare différent ;
+- secrets et configuration séparés ;
+- aucune dépendance technique entre les deux bots.
+
+Le service est hébergé exclusivement sur Cloudflare, sans dépendance à
+l'ancienne plateforme d'hébergement.
+
+
+HEBERGEMENT ET DEPOTS ACTUELS
+
+Compte Cloudflare : enzo@frenchjumper.fr
+Worker Cloudflare : frenchjumper-bot
+URL de production : https://frenchjumper-bot.enzo-488.workers.dev
+Base D1 : frenchjumper-bot
+Région D1 : Europe de l'Ouest (WEUR)
+
+Dépôt GitHub canonique :
+https://github.com/mrln033/FrenchJumper-Bot
+
+Dossier Git local canonique :
+D:\Users\osomv\Documents\FrenchJumper\FrenchJumper Bot
+Dans GitHub Desktop, utiliser ce chemin via Locate ou Add local repository.
+Le présent fichier TXT est placé à la racine du dossier du dépôt, avec le code.
+Il est versionné sur GitHub et accessible aux personnes ayant accès au dépôt :
+https://github.com/mrln033/FrenchJumper-Bot/blob/main/_Description_Projet.txt
+
+L'ancien dépôt d'hébergement a été supprimé.
+Le dépôt GitHub actif possède un historique propre qui ne reprend pas l'ancien
+token Discord révoqué.
+
+
+APPLICATION DISCORD
+
+Nom du bot : FrenchJumper Bot
+Identifiant du bot : 1479825051522957462
+Serveur Discord autorisé : 442710603300208652
+
+L'application Discord FrenchJumper reste indépendante de l'application
+PathFinder XIII, même si les deux projets sont administrés par le même compte.
+
+Le token Discord utilisé avant la migration a été révoqué et remplacé.
+Le nouveau token n'est stocké ni dans GitHub, ni dans un fichier versionné.
+
+
+FONCTIONNEMENT ACTUEL
+
+Le bot fonctionne comme un service HTTP Cloudflare Workers utilisant l'API REST
+officielle de Discord.
+
+Il ne maintient pas de connexion permanente au Discord Gateway. Cette
+architecture évite d'avoir un serveur Node.js actif en permanence et reste
+compatible avec l'offre gratuite de Cloudflare.
+
+Fonctions disponibles :
+
+- GET /health
+  Vérifie que le Worker répond correctement.
+
+- GET /health/discord
+  Vérifie de manière protégée que le token Discord correspond bien au bot
+  FrenchJumper. Cette route ne modifie rien sur Discord.
+
+- POST /sync
+  Permet à une application autorisée de modifier le surnom d'un membre et
+  d'ajouter ou retirer ses rôles Discord.
+
+- POST /webhooks/entropia-central
+  Reçoit les notifications signées d'Entropia Central et les enregistre de
+  manière idempotente dans la base D1. Un même événement reçu plusieurs fois
+  n'est pas traité plusieurs fois.
+
+
+SECURITE ET SECRETS
+
+Les secrets sont configurés exclusivement dans Cloudflare :
+
+- BOT_TOKEN
+  Token officiel de l'application Discord FrenchJumper Bot.
+
+- SYNC_TOKEN
+  Clé privée utilisée par les applications autorisées pour appeler POST /sync.
+
+- ENTROPIA_CENTRAL_SIGNING_SECRET
+  Secret facultatif servant à contrôler la signature HMAC des notifications
+  Entropia Central.
+
+Variable non secrète :
+
+- ALLOWED_GUILD_IDS = 442710603300208652
+  Limite les opérations Discord au serveur FrenchJumper autorisé.
+
+Les fichiers .env et .dev.vars sont ignorés par Git et ne doivent jamais être
+publiés.
+
+
+BASE DE DONNEES D1
+
+La base D1 frenchjumper-bot conserve :
+
+- les livraisons reçues depuis Entropia Central ;
+- leur état de traitement ;
+- les informations nécessaires à l'anti-doublon ;
+- les paramètres globaux prévus par le module Entropia.
+
+La structure initiale est versionnée dans :
+migrations/0001_initial.sql
+
+
+CE QUE LE BOT NE FAIT PAS ACTUELLEMENT
+
+- Il ne se connecte pas en self-bot avec un compte utilisateur Discord.
+- Il ne contient aucun token utilisateur.
+- Il ne scrape pas Discord.
+- Il ne peut pas lire librement un salon situé sur un serveur distant où
+  l'application FrenchJumper Bot n'est pas installée et autorisée.
+
+Le lecteur périodique Entropia Central est actif, avec un Cron toutes les deux
+minutes. La destination est pilotée par le dashboard ; la bascule de salon a
+été confirmée par l'utilisateur (r.16).
+
+Pour relayer un salon Discord ordinaire, le bot doit être installé sur le
+serveur source avec les permissions nécessaires. Si cela n'est pas possible,
+la solution recommandée reste un flux RSS, une API officielle ou un webhook
+fourni par la source.
+
+
+EVOLUTION PREVUE : LECTEUR DE NEWS
+
+Une extension gratuite et facilement délégable peut être ajoutée au Worker :
+
+- déclenchement périodique avec Cloudflare Cron Triggers ;
+- lecture d'un ou plusieurs flux RSS ou API officielles ;
+- stockage dans D1 de l'identifiant ou de l'URL des publications déjà traitées ;
+- prévention automatique des doublons ;
+- publication dans un salon Discord par webhook ou API REST ;
+- journalisation des succès et erreurs dans Cloudflare ;
+- configuration des sources et salons sans modifier les secrets du bot.
+
+Cette évolution ne nécessite ni hébergeur supplémentaire, ni serveur permanent, ni self-bot.
+
+
+MODULE ENTROPIA CENTRAL EN VALIDATION
+
+Le Worker contient désormais un lecteur autonome des globals Entropia Central.
+Il ne dépend pas des comptes Entropia Central individuels des membres.
+
+Fonctionnement développé :
+
+- chargement de la liste officielle depuis l'API du projet Membres ;
+- sélection des membres actifs avec niveau strictement supérieur à zéro ;
+- rafraîchissement du roster toutes les six heures ;
+- lecture paginée de l'API publique Entropia Central ;
+- reprise depuis un curseur persistant avec chevauchement de sécurité ;
+- comparaison normalisée des noms d'avatars ;
+- inclusion des équipes dont le nom contient Frenchjumper ou FRJ, sans distinction de casse ;
+- stockage D1 des seuls globals FrenchJumper ;
+- anti-doublon fondé sur l'identifiant du global Entropia Central ;
+- publication par FrenchJumper Bot dans un salon Discord configurable ;
+- cinq tentatives avec délai progressif en cas d'échec Discord ;
+- statut protégé accessible sur GET /health/entropia ;
+- déclenchement manuel protégé sur POST /admin/entropia/poll.
+
+Mode de transition retenu :
+
+- les notifications Entropia Central actuelles, configurées membre par membre,
+  continuent de publier dans le salon Discord existant ;
+- le nouveau lecteur publiera dans un salon privé temporaire ;
+- les deux résultats seront comparés avant la bascule définitive ;
+- le changement de destination final nécessitera seulement le remplacement de
+  l'identifiant du salon Discord.
+
+Etat de production au 25/09/2026 :
+
+- migration D1 0002_entropia_polling.sql appliquée ;
+- code déployé dans le Worker ;
+- ENTROPIA_POLLING_ENABLED=true ;
+- ENTROPIA_PUBLISH_ENABLED=true ;
+- Cron Trigger toutes les deux minutes ;
+- salon de comparaison : 1553100694503034940 ;
+- aucune modification des notifications Entropia Central existantes.
+
+Le test local réel a chargé 131 membres actifs et identifié correctement un
+global FrenchJumper parmi 58 globals récents, sans publication Discord.
+
+
+COMMANDES DE MAINTENANCE
+
+Depuis le dossier du dépôt Git :
+
+npm install
+  Installe les dépendances de développement.
+
+npm test
+  Exécute les tests automatiques.
+
+npx wrangler auth activate frenchjumper
+  Active le profil Cloudflare associé à enzo@frenchjumper.fr pour ce projet.
+
+npx wrangler deploy --dry-run
+  Vérifie la construction du Worker sans le publier.
+
+npx wrangler deploy
+  Publie une nouvelle version du Worker.
+
+npx wrangler d1 migrations apply frenchjumper-bot --remote
+  Applique les nouvelles migrations à la base D1 de production.
+
+npx wrangler secret list
+  Affiche uniquement les noms des secrets configurés, jamais leurs valeurs.
+
+
+CONTROLES REALISES ET FONCTIONNELS
+
+- Worker Cloudflare déployé et accessible publiquement.
+- Route /health fonctionnelle.
+- Token du bot vérifié avec succès auprès de Discord.
+- Bon compte Discord identifié : FrenchJumper Bot.
+- Accès limité au serveur Discord FrenchJumper autorisé.
+- Base D1 créée et migration initiale appliquée.
+- Secrets Cloudflare configurés.
+- Vingt-quatre tests automatiques validés sur vingt-quatre (27/09/2026).
+- Anciennes dépendances Express, discord.js, PostgreSQL et ancien hébergement supprimées.
+- Fichier .env retiré du suivi Git.
+- Dépôt GitHub propre créé et relié au dossier local.
+- Ancien dépôt GitHub lié à l'hébergement précédent supprimé.
+- Lecture de l'API Membres validée avec 131 membres actifs.
+- Lecture paginée de l'API Entropia Central validée.
+- Filtrage d'un véritable global FrenchJumper validé en local.
+- Anti-doublon D1 et reprise du curseur validés.
+- Nouveau module activé en production pour le salon temporaire
+  1553100694503034940, avec un Cron toutes les deux minutes.
+
+
+TACHES A REALISER
+
+INSTRUCTIONS DE SUIVI (à maintenir à chaque intervention)
+- Un numéro D-xxx désigne une demande de projet, pas chacune de ses étapes.
+  Les étapes techniques restent des sous-points de la même demande.
+- L'ensemble du périmètre initial est regroupé sous D-001.
+- D-002 attribué à l'interface d'administration privée ; D-003 réalisé pour
+  clarifier les noms locaux et la documentation. Prochaine demande : D-004.
+- Pour les nouvelles demandes, poursuivre la numérotation sans réutiliser les
+  numéros ni les modifier lors du déplacement vers les réalisations.
+- Historiser également les demandes formulées directement dans la conversation.
+- A l'achèvement vérifié, déplacer la demande intégralement, sans reformulation,
+  vers REALISE / REALISATIONS en conservant son identifiant D-xxx.
+- Ajouter une entrée r.N avec l'horodatage JJ/MM/AAAA HH:mm:ss (Europe/Paris),
+  la demande d'origine, la réalisation et les contrôles effectués.
+- Une tâche partielle ou en attente de validation reste dans TACHES A REALISER ;
+  y préciser l'avancement et les points restant à vérifier.
+- Ne pas inventer l'heure d'une réalisation historique : indiquer « heure non
+  consignée » lorsque seule la date est connue.
+
+D-001 => Mise en place initiale de FrenchJumper Bot et du suivi Entropia Central
+Statut : EN COURS DE VALIDATION (réalisations partielles consignées ci-dessous).
+Périmètre initial consolidé : migration sur Cloudflare du bot FrenchJumper,
+indépendant de PathFinder XIII ; retrait des dépendances à l'ancien hébergement ; suivi autonome
+des globals des membres, sans compte Entropia Central obligatoire ; respect des
+quotas gratuits ; comparaison dans un salon privé tout en conservant les
+webhooks existants ; documentation et suivi des tâches.
+Ce texte est une synthèse des échanges initiaux, et non une citation intégrale.
+
+Validation du lecteur de globals :
+- Valider visuellement le nouveau format compact Global / HoF / ATH sur les
+  prochaines publications du salon temporaire.
+- Comparer les globals, montants, horaires et avatars avec les notifications
+  Entropia Central actuelles, qui restent actives pendant les essais.
+- Vérifier l'absence de doublons, les reprises après erreur et le rattrapage
+  après une interruption ou une limite de pagination atteinte.
+- Mesurer la consommation réelle Workers et D1, en tenant compte des autres
+  projets du même compte Cloudflare.
+- Vérifier la mise à jour automatique des membres entrants et sortants.
+- Valider les publications d'équipe : nom contenant Frenchjumper ou FRJ,
+  sans distinction de casse ; la composition de l'équipe n'est pas vérifiée.
+
+Bascule de salon : réussite confirmée par l'utilisateur, voir r.16.
+La destination du bot est désormais pilotée via les réglages D1 du dashboard ;
+ne pas considérer l'ancien identifiant dans Wrangler comme la destination active.
+Les webhooks ont été déplacés par l'utilisateur, sans nécessité de les désactiver.
+La mention Comparaison avait déjà été retirée des messages (r.8).
+
+Maintenance et évolutions :
+- Définir une durée de conservation des globals et une purge adaptée à D1.
+- Prévoir le suivi et la relance des publications définitivement en échec.
+
+- Identifier précisément l'application qui appellera POST /sync.
+- Y enregistrer l'URL du Worker et le SYNC_TOKEN correspondant.
+- Effectuer un premier test contrôlé de modification d'un membre Discord.
+- Définir ultérieurement les éventuelles sources RSS ou autres API de news.
+- Configurer ENTROPIA_CENTRAL_SIGNING_SECRET si le webhook Entropia Central est
+  effectivement utilisé.
+
+
+D-002 - Interface web privée de configuration de FrenchJumper Bot
+Demande d'origine : « ok.... faisons ça stp » (page d'administration proposée :
+salon de destination, pause/reprise, état du service et actualisation membres).
+Précision utilisateur : « je pense plutôt à un ou des roles....
+dans un premier temps, le role Administrateur (464513638414417930), mais en ayant la possibilité d'en ajouter d'autres, via le dashboard d'administration du bot ».
+Statut : développement et déploiement réalisés ; connexions OAuth2 réelles
+FrenchJumper Bot et FRJ Membres validées par l'utilisateur le 26/09/2026.
+Changement de salon via le dashboard et fonctionnement de la bascule validés
+par l'utilisateur. Recette des autres commandes encore à réaliser.
+D-002 n'est pas clôturée.
+- Valider le refus sans rôle, pause/reprise, actualisation des membres et
+  ajout/retrait d'un rôle de test.
+
+REALISE / REALISATIONS
+
+r.20 = 27/09/2026 08:46:55 (Europe/Paris) - D-003 - Documentation partagée
+Demande : rendre la documentation accessible sur GitHub aux personnes autorisées,
+où qu'elles soient.
+Réalisation locale : suivi TXT ajouté au périmètre à versionner, lien depuis le
+README, retrait des indications périmées de lecteur désactivé et de Cron absent.
+Relecture du document : aucune valeur de secret présente.
+Nettoyage du Bureau en attente de clarification ; aucun fichier déplacé lors
+de la tentative bloquée par le contrôle de sécurité.
+
+r.19 = 27/09/2026 08:41:44 (Europe/Paris) - D-003 - Nettoyage et raccourci Bureau
+Ancien dépôt d'initialisation supprimé après vérification : aucune modification
+locale et tous ses commits sont conservés dans le dépôt actif sur D:.
+Copie résiduelle FrenchJumper-Bot supprimée après comparaison SHA-256 des
+1696 fichiers avec leurs exemplaires sur D:. Suppression directe, hors Corbeille ;
+le contenu et l'historique nécessaires restent disponibles dans le dépôt actif.
+Raccourci FrenchJumper Bot.lnk créé sur le Bureau vers le nouveau dossier sur D:.
+Le dossier Bureau FrenchJumper Bot ne contient plus que le cache .pnpm-store,
+conservé par précaution. Les 24 tests réussissent depuis D: après le nettoyage.
+Aucune modification de la production.
+
+r.18 = 27/09/2026 08:37:29 (Europe/Paris) - D-003 - Dépôt regroupé sur D:
+Précision utilisateur : éviter un double niveau portant le nom du projet et
+placer le dépôt sur le lecteur de données D:.
+Réalisation : dépôt complet, historique Git, fichiers locaux et suivi TXT
+regroupés directement dans D:\Users\osomv\Documents\FrenchJumper\FrenchJumper Bot.
+Déplacement inter-lecteurs terminé après comparaison SHA-256 de 1696 fichiers
+restants suite à une interruption Windows sur les dossiers cachés.
+Contrôles : commit 6c712bf conservé, remote GitHub inchangé, 24 tests réussis,
+dry-run réussi ; profil Wrangler frenchjumper rattaché au nouveau chemin.
+Aucun déploiement ni changement de configuration de production.
+Le suivi TXT est maintenant à la racine du dépôt mais pas encore suivi dans Git.
+Sur le Bureau restent un ancien dépôt d'initialisation et le cache .pnpm-store,
+conservés sans suppression. GitHub Desktop doit viser le nouveau dossier sur D:.
+
+r.17 = 27/09/2026 08:26:56 (Europe/Paris) - D-003 - Nommage local clarifié
+Demande (synthèse) : retirer les références à l'ancien hébergeur dans les
+fichiers actuels et les noms de dossiers afin d'éviter toute confusion.
+Réalisation : dépôt renommé FrenchJumper-Bot, mentions retirées du suivi TXT,
+branche d'archive locale renommée legacy-hosting-history-local sans suppression
+de son contenu. Ancien rattachement Wrangler retiré, profil frenchjumper
+rattaché au nouveau chemin. Historique des commits conservé sans réécriture.
+Contrôles : 24 tests réussis, dry-run réussi depuis le nouveau dossier, dépôt
+propre et remote GitHub conservé. Aucune modification du code déployé, des
+secrets, de D1 ou des réglages de publication ; aucun redéploiement nécessaire.
+D-003 réalisé. GitHub Desktop doit être repointé vers le chemin canonique.
+
+r.16 = 26/09/2026 20:55:11 (Europe/Paris) - D-001 / D-002 - Bascule validée
+Confirmation utilisateur : « je confirme que la bascule de salon, faite via le webhook et via l'interface de gestion, a parfaitement fonctionné... ».
+Validation : déplacement du webhook et modification de la destination du bot
+depuis le dashboard réussis. Confirmation utilisateur, sans nouveau test ni
+modification distante lors de cette consignation. Les identifiants des nouveaux
+salons n'ont pas été relevés ici. Les autres validations de D-001 et D-002 restent
+ouvertes ; cette réussite ne les clôture pas automatiquement.
+
+r.15 = 26/09/2026 13:54:47 (Europe/Paris) - D-002 - Connexions validées
+Confirmation utilisateur : « connexion testée des 2 coté => ok ».
+Connexion réelle réussie au dashboard FrenchJumper Bot et à FRJ Membres après
+mise à jour des secrets OAuth2. Activation de l'authentification validée.
+Aucun changement de salon, de publication ou de rôle effectué lors de cette
+consignation. Cette validation ne clôture pas les essais des commandes du
+dashboard ni le contrôle utilisateur du refus d'accès sans rôle autorisé.
+
+r.14 = 26/09/2026 13:41:08 (Europe/Paris) - D-002 - Configuration OAuth2
+L'utilisateur confirme la mise à jour des secrets après rotation coordonnée :
+DISCORD_OAUTH_CLIENT_SECRET pour frj-membres-soc-api et DISCORD_CLIENT_SECRET
+pour frenchjumper-bot. Aucune valeur lue ou affichée pendant les contrôles.
+Contrôles HTTP : santé des deux services 200 ; API privée du dashboard 401
+sans session ; login 302 vers Discord, application 1479825051522957462,
+scope identify et callback /admin/callback attendus. Ces contrôles confirment
+que le parcours est activé, pas la validité du secret à l'échange de code.
+Connexion utilisateur réelle à vérifier sur les deux services.
+
+r.13 = 26/09/2026 13:03:30 (Europe/Paris) - D-002 - Première version déployée
+Interface : https://frenchjumper-bot.enzo-488.workers.dev/admin
+Connexion OAuth2 Discord, session sécurisée d'une heure, rôle initial
+464513638414417930 non supprimable depuis la page, rôles supplémentaires
+configurables. Droits revérifiés sur Discord à chaque requête privée.
+Fonctions : salons texte/annonces accessibles au bot, pause/reprise, état et
+15 dernières entrées, demande d'actualisation FRJ Membres, gestion des rôles.
+Pause : nouveaux globals conservés en attente ; reprise dans le salon courant.
+Pas de reprise automatique des anciennes entrées observed ni de l'historique.
+Réglages D1 persistants prioritaires sur les variables initiales ; aucun
+réglage enregistré à la livraison, donc salon actuel et publication inchangés.
+Migration 0003 appliquée localement et à distance. 24 tests automatisés réussis
+(SQLite local, OAuth simulé, CSRF, sessions, rôles, permissions, concurrence,
+pause/reprise et non-régression), dry-run et routes HTTP locales vérifiés.
+Version déployée : 67f08bc0-b983-41a0-9224-30aff2d5c31e.
+Production : /health 200, /admin 200 ; API privée 503 attendue tant que le secret
+OAuth manque. Connexion réelle et validation visuelle authentifiée à faire.
+Pas de Queue ajoutée, lecture de réglages indexée à chaque Cron ; interface
+sans actualisation automatique. Webhooks existants et PathFinder inchangés.
+
+
+r.3 = 25/09/2026 (heure non consignée) - D-001 - Premières publications
+Confirmation utilisateur : globals de 19h58 et 20h03 reçus dans le salon privé.
+Réalisation : démarrage du lecteur et publication Discord confirmés ; les
+contrôles de comparaison exhaustive, quotas et reprises restent ouverts.
+
+r.4 = 25/09/2026 (heure non consignée) - D-001 - Format compact et source explicite
+Demande : reprendre les captures Global et HoF, proposer un ATH distinctif.
+Précision utilisateur :
+Le coté 'cliquable' n'est pas forcément obligatoire.. par contre, la source est indispensable (pour la transparence à laquelle je tiens)
+Réalisation : phrase compacte, montant en gras, marqueur de record absolu pour
+ATH. La règle initiale de couleurs par record est remplacée par r.5.
+Source explicitement affichée
+en pied de chaque message : « Source : Entropia Central • entropiacentral.com ».
+La mention Comparaison est conservée dans le salon temporaire.
+Horodatage : dateTime du global fourni par Entropia Central, converti en UTC
+pour l'encart puis affiché par Discord dans le fuseau du lecteur. L'heure de
+publication du bot ne remplace jamais celle de l'événement ; si la date source
+est invalide, aucune heure n'est inventée.
+Contrôle : tests automatisés ; validation visuelle des prochaines publications
+encore attendue. Les anciennes publications ne sont pas modifiées.
+
+r.1 = 25/09/2026 (heure non consignée) - D-001 - Réalisations initiales partielles
+
+Demande associée : D-001, périmètre initial décrit dans TACHES A REALISER.
+Réalisations et contrôles :
+- migration du bot sur le compte Cloudflare enzo@frenchjumper.fr ;
+- Worker et base D1 dédiés, distincts de PathFinder XIII ;
+- validation du service HTTP et du token Discord ;
+- nettoyage des dépendances historiques et publication du dépôt GitHub propre ;
+- développement du lecteur Entropia avec roster actif, pagination, stockage D1
+  et publication dans le salon temporaire 1553100694503034940 ;
+- dix tests automatiques réussis et essais locaux avec les API réelles ;
+- activation du Cron toutes les deux minutes et du mode comparaison ;
+- conservation des webhooks Entropia Central existants ;
+- création du fichier de description et du suivi des tâches.
+Le détail des contrôles connus figure aussi dans CONTROLES REALISES ET FONCTIONNELS.
+Ces réalisations ne clôturent pas D-001 : la validation en production et la
+bascule définitive restent à réaliser.
+
+r.2 = 25/09/2026 20:51:42 (Europe/Paris) - D-001 - Clarification du suivi initial
+
+Précision de l'utilisateur (conservée intégralement) :
+peux-tu corriger donc, afin d'éviter toute ambiguité ??? par exemple, numérote les taches initiales en D-001, avec les réalisations correspondantes, et pouf! on part sur la prochaine à D-002 ?? :D
+
+Réalisation :
+- regroupement du périmètre initial sous une seule demande D-001 ;
+- remplacement de la numérotation par étape par de simples sous-points ;
+- rattachement des réalisations initiales à D-001, sans clôture prématurée ;
+- prochaine nouvelle demande réservée à D-002 ;
+- maintien du transfert horodaté vers les réalisations après validation.
+
+
+r.5 = 26/09/2026 07:52:57 (Europe/Paris) - D-001 - Couleurs par activité
+Demande : différencier chasse, minage et craft, et non Global, HoF et ATH.
+Réalisation : chasse rouge-orangé, minage (y compris spatial) bleu, craft jaune.
+Les activités non reconnues restent grises. Les marqueurs HoF et ATH restent
+textuels ; la source Entropia Central et l'horodatage de l'événement sont conservés.
+Contrôle : 11 tests réussis, dont vérification des couleurs pour les trois
+niveaux de record. Les webhooks existants et le salon de comparaison restent
+inchangés. Validation visuelle des nouvelles publications encore attendue.
+Déploiement confirmé le 26/09/2026 à 07:58:02 (Europe/Paris), après reconnexion
+du profil frenchjumper au compte enzo@frenchjumper.fr. Tests : 11/11 réussis ;
+dry-run réussi. Worker : frenchjumper-bot, Cron toutes les deux minutes conservé.
+Version déployée : e47a783b-a7cc-4a26-b091-1fc354f81473.
+
+r.6 = 26/09/2026 08:03:00 (Europe/Paris) - D-001 - Globals d'équipe
+Règle précisée par l'utilisateur : nom contenant Frenchjumper ou FRJ, avec
+toute combinaison de majuscules/minuscules. Recherche dans tout le nom,
+sans vérification de la composition de l'équipe. Filtre individuel inchangé.
+Réalisation : filtre activé, marqueur équipe et lien équipe si fourni par la
+source ; source, date réelle et couleurs par activité conservées. Même circuit
+anti-doublon et salon temporaire. Aucun appel API ajouté ; seuls les événements
+d'équipe retenus ajoutent les écritures/publications habituelles.
+Contrôles : 13 tests réussis et dry-run réussi. Déployé sur frenchjumper-bot,
+version 77142822-44c5-4a5d-8328-2dc14eb00fb7. Validation visuelle d'un vrai
+global d'équipe encore attendue ; pas de reprise historique forcée.
+
+r.7 = 26/09/2026 08:28:26 (Europe/Paris) - D-001 - Dix catégories de couleurs
+Réalisation : Hunting #FF5733 ; Mining #3498DB ; Construction #FFB900 ;
+Killing Spree #C0392B ; New Items #2ECC71 ; Reached Item Tiers #9B59B6 ;
+Rare Items #E84393 ; Kill as Creature #A66E3F ; Space Mining #5865F2 ;
+Fishing #1ABC9C. Cette palette remplace les règles de couleurs précédentes.
+Casse ignorée ; alias PvP, Discovery, Tiered Item et Rare item reconnus.
+Repli gris #95A5A6 pour les catégories inconnues. Couleur indépendante du
+niveau Global/HoF/ATH. Aucun changement des filtres membres/équipes, de la
+source, des horodatages, du salon de comparaison ou des webhooks existants.
+Contrôles : 14 tests réussis et dry-run réussi. Déploiement confirmé,
+version d375f5b7-b2f7-4d68-adc9-bf626efa8100. Les catégories rares restent
+à vérifier visuellement sur des événements réels (échantillon API limité).
+
+r.8 = 26/09/2026 10:33:54 (Europe/Paris) - D-001 - Pied d'encart minimal
+Réalisation : uniquement « Source : entropiacentral.com » suivi de l'horodatage
+Discord alimenté par dateTime de l'entrée, jamais par l'heure du post.
+Espaces avant et après les deux-points. Mention Comparaison supprimée du pied
+uniquement ; salon temporaire et webhooks existants inchangés. Cette règle
+remplace les descriptions antérieures du pied d'encart. Date absente ou
+invalide : aucune heure inventée (y compris dateTime null).
+Contrôles : 15 tests réussis, dry-run réussi, déploiement confirmé.
+Version : f8ac2e82-1d61-4940-b9ee-49febd48e66c.
+
+r.9 = 26/09/2026 10:40:06 (Europe/Paris) - D-001 - Texte français
+Réalisation : phrases du bot traduites, noms issus de la source non traduits
+(avatars, équipes, mobs, objets, ressources et lieux). Sigles HOF/ATH et PED
+conservés ; ATH accompagné de RECORD ABSOLU. Minage : « a trouvé un gisement
+de » ; minage spatial : « a trouvé un gisement spatial de ». « a découvert »
+réservé aux nouveaux objets conformément à la précision utilisateur.
+Source, horodatage de l'entrée, couleurs et filtres inchangés.
+Contrôles : 16 tests réussis, dry-run réussi, version finale déployée :
+1055396b-73f0-4700-8675-45067ab17303. Validation visuelle encore attendue.
+
+r.10 = 26/09/2026 10:45:54 (Europe/Paris) - D-001 - Précision des formulations
+Chasse : « a tué un » ; nouveaux objets : « a découvert un » ; minage spatial :
+« a trouvé un gisement spatial sur » (nom d'astéroïde). Minage terrestre :
+« a trouvé un gisement de » conservé (nom de ressource). Noms inchangés.
+Ces formulations remplacent celles de r.9. Contrôles : 16 tests réussis,
+dry-run réussi ; déploiement cbb15678-53d9-4ce6-b69a-b968f15b8777 confirmé.
+
+r.11 = 26/09/2026 10:52:33 (Europe/Paris) - D-001 - Formulations complémentaires
+Construction : « a fabriqué un [objet] » ; paliers : « a amélioré un [objet]
+au palier [N] » ; pêche : « a pêché un [poisson] » ; Kill as Creature :
+« a réalisé un global en tant que [cible] ». Killing Spree et Rare Items
+inchangés et validés par l'utilisateur. Noms de la source inchangés.
+Ces formulations remplacent les versions précédentes correspondantes.
+Contrôles : 16 tests réussis, dry-run réussi et déploiement confirmé :
+f7a291c9-84c9-4414-a694-c1749ba19e80.
+
+r.12 = 26/09/2026 11:20:18 (Europe/Paris) - D-001 - Nom corrigé et rattrapage
+Après correction utilisateur dans FRJ Membres, rafraîchissement demandé puis
+confirmé : Hohenheim le lumineux Dunandir remplace Durandir dans le roster.
+Rattrapage ciblé du global 30979454 (Cornundos Old, 16 PED), avec identifiant
+anti-doublon conservé. Publication confirmée dans le salon temporaire : message
+1553335441162379346. Horodatage d'événement conservé : 26/09/2026 10:12:37
+(Europe/Paris). Pas de reprise générale de l'historique ni de modification
+des webhooks. Erreur Google en lecture locale non reproduite par le Worker :
+rafraîchissement et cycle de publication réussis sans erreur.
+
+REGLES IMPORTANTES
+
+- Ne jamais copier un token Discord dans GitHub ou dans ce fichier.
+- Ne jamais utiliser de token de compte utilisateur Discord.
+- Ne jamais installer un self-bot.
+- Toujours activer le profil Wrangler frenchjumper avant un déploiement.
+- Toujours exécuter npm test et le dry-run avant de publier.
+- Ne pas modifier le Worker PathFinder XIII lors d'une intervention sur
+  FrenchJumper Bot.

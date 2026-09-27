@@ -3,6 +3,12 @@
 Service HTTP du bot FrenchJumper, déployé sur Cloudflare Workers sans connexion
 Discord Gateway permanente.
 
+## Documentation et suivi
+
+La [description du projet et le suivi des tâches](_Description_Projet.txt) sont
+versionnés dans ce dépôt et consultables sur GitHub par toute personne disposant
+de l'accès au dépôt. Aucun secret ne doit être ajouté à cette documentation.
+
 ## Fonctions
 
 - `GET /health` : état du service ;
