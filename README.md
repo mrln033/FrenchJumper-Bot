@@ -47,6 +47,10 @@ même au milieu d'un mot. Ce filtre de nom ne vérifie pas les membres de l'équ
 Ils suivent le même circuit anti-doublon et le même salon de comparaison, avec
 un marqueur 👥. Aucun appel API ni stockage supplémentaire par équipe n'est ajouté.
 
+Les noms provenant d'Entropia Central sont conservés tels quels. Les suffixes
+d'items entre parenthèses, par exemple `(L)`, sont affichés dans Discord sans
+barres obliques d'échappement, y compris lorsque le nom est cliquable.
+
 ## Couleurs des catégories
 
 Couleurs des encarts, indépendantes de Global / HoF / ATH :

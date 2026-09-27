@@ -168,6 +168,19 @@ test("Discord comparison message is safe and identifies the global", () => {
   assert.equal(ath.embeds[0].color, 0x3498db);
 });
 
+test("Discord item links display parenthesized item suffixes without backslashes", () => {
+  const embed = buildDiscordGlobalMessage({
+    avatarName: "Angel Feather Silverstream",
+    type: "Construction",
+    craftedItemName: "D-Class Mining Amp (L)",
+    detailRoute: "/wiki/items/d-class-mining-amp-l",
+    globalValue: 60,
+  }).embeds[0];
+
+  assert.ok(embed.description.includes("[D-Class Mining Amp (L)]("));
+  assert.ok(!embed.description.includes("\\(L\\)"));
+});
+
 test("Discord colors identify activity independently of Global, HoF or ATH", () => {
   const colors = { Hunting: 0xff5733, Mining: 0x3498db, Construction: 0xffb900,
     "Killing Spree": 0xc0392b, "New Items": 0x2ecc71, "Reached Item Tiers": 0x9b59b6,

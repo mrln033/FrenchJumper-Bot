@@ -309,7 +309,7 @@ function entropiaDetail(global) {
 }
 
 function messageLabel(value) {
-  return truncate(value, 200).replace(/[\\`*_{}\[\]()<>]/g, "\\$&");
+  return truncate(value, 200).replace(/[\\`*_{}\[\]<>]/g, "\\$&");
 }
 
 function ecLink(label, route) {

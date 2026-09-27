@@ -231,7 +231,7 @@ CONTROLES REALISES ET FONCTIONNELS
 - Accès limité au serveur Discord FrenchJumper autorisé.
 - Base D1 créée et migration initiale appliquée.
 - Secrets Cloudflare configurés.
-- Vingt-quatre tests automatiques validés sur vingt-quatre (27/09/2026).
+- Vingt-cinq tests automatiques validés sur vingt-cinq (27/09/2026).
 - Anciennes dépendances Express, discord.js, PostgreSQL et ancien hébergement supprimées.
 - Fichier .env retiré du suivi Git.
 - Dépôt GitHub propre créé et relié au dossier local.
@@ -303,6 +303,17 @@ Maintenance et évolutions :
 - Configurer ENTROPIA_CENTRAL_SIGNING_SECRET si le webhook Entropia Central est
   effectivement utilisé.
 
+D-004 - Affichage des suffixes d'items (L) sans barre oblique
+Demande d'origine : « il y a un petit souci dans le nom des items (L) ....
+peux-tu corriger cela afin de ne pas faire apparaitre de barre oblique à
+l'affichage ? »
+Statut : EN ATTENTE DE VALIDATION EN PRODUCTION.
+Le correctif retire l'échappement Markdown inutile des parenthèses dans les noms
+cliquables, tout en conservant l'échappement des caractères Markdown sensibles.
+Le test automatisé couvre explicitement « D-Class Mining Amp (L) » et vérifie
+l'absence de `\(L\)` dans le message Discord. La validation finale doit être
+faite sur une prochaine notification réelle en production.
+
 
 D-002 - Interface web privée de configuration de FrenchJumper Bot
 Demande d'origine : « ok.... faisons ça stp » (page d'administration proposée :
@@ -318,6 +329,16 @@ D-002 n'est pas clôturée.
   ajout/retrait d'un rôle de test.
 
 REALISE / REALISATIONS
+
+r.21 = 27/09/2026 10:20:30 (Europe/Paris) - D-004 - Suffixes d'items lisibles
+Demande : ne plus afficher de barres obliques autour du suffixe (L) des items.
+Réalisation : parenthèses retirées de la liste des caractères échappés dans les
+libellés Discord ; les autres protections Markdown sont conservées. README et
+suivi projet mis à jour. Test de non-régression ajouté avec « D-Class Mining Amp
+(L) » : 25 tests sur 25 réussis et dry-run Wrangler validé. Déploiement réussi
+sur frenchjumper-bot, version 97f46c24-f7e7-44b7-96aa-7c37de392922 ; Cron toutes
+les deux minutes conservé et GET /health vérifié avec status ok. Validation
+visuelle d'une notification réelle encore attendue.
 
 r.20 = 27/09/2026 08:46:55 (Europe/Paris) - D-003 - Documentation partagée
 Demande : rendre la documentation accessible sur GitHub aux personnes autorisées,
