@@ -23,7 +23,7 @@
     "ENTROPIA_MAX_PAGES": "10"
   },
   "triggers": {
-    "crons": ["*/2 * * * *"]
+    "crons": ["* * * * *"]
   },
   "observability": {
     "enabled": true,

@@ -36,9 +36,12 @@ ENTROPIA_PUBLISH_ENABLED=true
 ENTROPIA_DISCORD_CHANNEL_ID=1553100694503034940
 ```
 
-Le Cron `*/2 * * * *` interroge la source toutes les deux minutes et les
-publications visent le salon temporaire ci-dessus. Les notifications Entropia Central existantes peuvent
-continuer à publier dans leur salon habituel pendant toute la validation.
+Le Cron `* * * * *` interroge la source chaque minute depuis le 28/09/2026.
+La destination enregistrée dans le dashboard (D1) est prioritaire sur le salon
+initial ci-dessus. Les webhooks Entropia Central existants restent indépendants.
+Le relevé de référence à deux minutes et le protocole de comparaison figurent
+dans [_Description_Projet.txt](_Description_Projet.txt), demande D-005.
+Aucune Cloudflare Queue n'est utilisée par la relève.
 
 Le Worker recharge le roster toutes les six heures et considère comme actif un
 membre dont `niveau` est strictement supérieur à zéro. Les globals d'équipe sont

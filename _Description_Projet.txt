@@ -1,6 +1,6 @@
 Projet = FrenchJumper Bot
 
-Dernière mise à jour : 27/09/2026
+Dernière mise à jour : 28/09/2026
 
 
 BUT DU PROJET
@@ -127,8 +127,8 @@ CE QUE LE BOT NE FAIT PAS ACTUELLEMENT
 - Il ne peut pas lire librement un salon situé sur un serveur distant où
   l'application FrenchJumper Bot n'est pas installée et autorisée.
 
-Le lecteur périodique Entropia Central est actif, avec un Cron toutes les deux
-minutes. La destination est pilotée par le dashboard ; la bascule de salon a
+Le lecteur périodique Entropia Central est actif, avec un Cron chaque minute
+depuis le 28/09/2026 (r.22). La destination est pilotée par le dashboard ; la bascule de salon a
 été confirmée par l'utilisateur (r.16).
 
 Pour relayer un salon Discord ordinaire, le bot doit être installé sur le
@@ -251,7 +251,9 @@ INSTRUCTIONS DE SUIVI (à maintenir à chaque intervention)
   Les étapes techniques restent des sous-points de la même demande.
 - L'ensemble du périmètre initial est regroupé sous D-001.
 - D-002 attribué à l'interface d'administration privée ; D-003 réalisé pour
-  clarifier les noms locaux et la documentation. Prochaine demande : D-004.
+  clarifier les noms locaux et la documentation. D-004 : suffixes d'items ;
+  D-005 : relève à une minute et comparaison des consommations.
+  Prochaine demande : D-006.
 - Pour les nouvelles demandes, poursuivre la numérotation sans réutiliser les
   numéros ni les modifier lors du déplacement vers les réalisations.
 - Historiser également les demandes formulées directement dans la conversation.
@@ -303,6 +305,42 @@ Maintenance et évolutions :
 - Configurer ENTROPIA_CENTRAL_SIGNING_SECRET si le webhook Entropia Central est
   effectivement utilisé.
 
+D-005 - Relève à une minute et comparaison des consommations
+Demande d'origine : « ok.... descend ce délai à 1 minutes si possible... dans la documentation, relève les consommation actuelles, et nous ferons un nouveau relevé dans 2-3 jours (à 1 minutes) pour comparer »
+Statut : Cron à une minute déployé et vérifié (r.22) ; comparaison à réaliser.
+- Remplacer */2 * * * * par * * * * *, soit 1440 passages programmés/jour
+  au lieu de 720, sans changer code, secrets, salon ou rafraîchissement membres.
+- Refaire le relevé le 30/09 ou le 01/10/2026. Pour comparer deux journées UTC
+  complètes à une minute, privilégier le 01/10 et les 29 et 30 septembre.
+- Exclure le 28/09 des moyennes comparatives : journée de transition.
+- Comparer lignes lues/écrites, requêtes SQL, stockage, globals publiés,
+  erreurs/reprises et nombre de membres. Vérifier les limites par invocation
+  et les erreurs de l'API source, pas uniquement les quotas quotidiens.
+- Relevé à reprendre à la demande ; aucun rappel automatique créé.
+
+REFERENCE A DEUX MINUTES (relevé Cloudflare du 28/09/2026)
+Source : GraphQL d1AnalyticsAdaptiveGroups, groupé par date UTC et databaseId.
+Compte : 488c008885a1dc66fd4c52776130ea46 (enzo@frenchjumper.fr).
+Base : frenchjumper-bot / 4cbcf850-9593-42fb-8397-7dfca3565519.
+Périmètre : toute la base du bot, dashboard et maintenance compris ; ce n'est
+pas une attribution exclusive aux globals. Données des journées UTC complètes.
+Date UTC   | Lignes lues | Lignes écrites | Requêtes lecture | Requêtes écriture
+26/09/2026 |     103225  |          2987  |             3493 |              2812
+27/09/2026 |     101988  |          3072  |             3800 |              2844
+Total     |     205213  |          6059  |             7293 |              5656
+Moyenne quotidienne : 102606,5 lignes lues ; 3029,5 lignes écrites ;
+6474,5 requêtes SQL (lecture + écriture).
+Taille observée le 28/09 : 241664 octets (taille totale, pas croissance/48 h).
+Queues : 0 opération générée par ce circuit, qui n'utilise pas ce service.
+Les quotas de l'autre compte FRJ Membres sont indépendants.
+Quotas D1 Free : 5000000 lignes lues/jour, 100000 écrites/jour, partagés
+sur le compte ; moyenne du bot : 2,05 % et 3,03 % respectivement.
+Projection à une minute, NON MESUREE : environ 202000 lectures et 5190
+écritures/jour à activité comparable ; Queues reste à 0 pour ce circuit.
+Sources : https://developers.cloudflare.com/d1/platform/pricing/
+https://developers.cloudflare.com/d1/observability/metrics-analytics/
+https://developers.cloudflare.com/queues/platform/pricing/
+
 D-004 - Affichage des suffixes d'items (L) sans barre oblique
 Demande d'origine : « il y a un petit souci dans le nom des items (L) ....
 peux-tu corriger cela afin de ne pas faire apparaitre de barre oblique à
@@ -329,6 +367,19 @@ D-002 n'est pas clôturée.
   ajout/retrait d'un rôle de test.
 
 REALISE / REALISATIONS
+
+r.22 = 28/09/2026 12:42:01 (Europe/Paris) - D-005 - Relève à une minute
+Demande associée : D-005, conservée intégralement dans TACHES A REALISER.
+Cron * * * * * enregistré le 28/09/2026 à 10:41:33 UTC (12:41:33 Paris),
+en remplacement de */2 * * * *. Déploiement ciblé des déclencheurs via Wrangler ;
+aucun nouveau code, secret, réglage D1 ou salon de publication déployé.
+Contrôles : 25 tests réussis, dry-run réussi, relecture API des schedules :
+un seul Cron * * * * *, GET /health avec status ok.
+La propagation des Cron peut prendre jusqu'à 15 minutes ; la cadence effective
+des premières exécutions n'a pas été mesurée lors de cette vérification.
+Mesures D1 des 26 et 27 septembre UTC archivées dans D-005 ; projection
+à une minute explicitement distinguée des mesures réelles. Queues non utilisé.
+Comparaison prévue au 01/10 sur les 29 et 30 septembre UTC. D-005 reste ouverte.
 
 r.21 = 27/09/2026 10:20:30 (Europe/Paris) - D-004 - Suffixes d'items lisibles
 Demande : ne plus afficher de barres obliques autour du suffixe (L) des items.
